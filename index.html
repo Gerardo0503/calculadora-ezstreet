@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de Diésel - EZ Street</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f2f2f2; }
+        h1 { color: #003366; }
+        label, select, input { font-size: 1.1em; margin-top: 10px; display: block; width: 100%; }
+        .resultado { margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .small { font-size: 0.9em; color: gray; }
+    </style>
+</head>
+<body>
+    <h1>EZ Street - Calculadora de Diésel</h1>
+    <label for="tiempo">⏱️ Ingresa los segundos medidos con la copa EZ CUP 4:</label>
+    <input type="number" id="tiempo" placeholder="Ej. 32" step="any">
+
+    
+    <label for="litros">🛢️ Ingresa los litros de mezcla que vas a preparar:</label>
+    <input type="number" id="litros" placeholder="Ej. 1000" step="any">
+
+    <label for="objetivo">🎯 Viscosidad objetivo:</label>
+    <select id="objetivo">
+        <option value="400">400 CPP</option>
+        <option value="450">450 CPP</option>
+    </select>
+
+    
+    <button onclick="calcular()" style="margin-top:15px;padding:10px 20px;font-size:1.1em;background:#003366;color:white;border:none;border-radius:5px;">CALCULAR</button>
+    <div class="resultado" id="resultado">
+    
+        <strong>Resultado:</strong><br>${litrosDiesel}
+
+        Ingresa un tiempo para ver la viscosidad y el % de diésel recomendado.
+    </div>
+
+    <script>
+        const tablaConversion = [ // segundos -> CPP (simulado)
+            { seg: 20, cpp: 600 }, { seg: 25, cpp: 550 }, { seg: 30, cpp: 500 },
+            { seg: 35, cpp: 450 }, { seg: 40, cpp: 400 }, { seg: 45, cpp: 350 },
+            { seg: 50, cpp: 300 }
+        ];
+
+        const dieselPorCPP = {
+            400: { 600: 5, 550: 4, 500: 3, 450: 2, 400: 0 },
+            450: { 600: 6, 550: 5, 500: 3.5, 450: 0 }
+        };
+
+        function estimarCPP(seg) {
+            if (seg <= 20) return 600;
+            if (seg >= 50) return 300;
+            for (let i = 0; i < tablaConversion.length - 1; i++) {
+                let a = tablaConversion[i], b = tablaConversion[i + 1];
+                if (seg >= a.seg && seg <= b.seg) {
+                    let frac = (seg - a.seg) / (b.seg - a.seg);
+                    return Math.round(a.cpp + frac * (b.cpp - a.cpp));
+                }
+            }
+        }
+
+        // Eventos eliminados para usar botón
+
+        window.calcular = function calcular() {
+            const seg = parseFloat(document.getElementById("tiempo").value);
+            
+            const litros = parseFloat(document.getElementById("litros").value);
+const objetivo = parseInt(document.getElementById("objetivo").value);
+            if (isNaN(seg)) return;
+
+            const cppActual = estimarCPP(seg);
+            const dieselTabla = dieselPorCPP[objetivo];
+            let diesel = dieselTabla[cppActual];
+            let litrosDiesel = "";
+            if (!isNaN(litros) && !isNaN(dieselTabla[cppActual])) {
+                litrosDiesel = "<br>Litros de diésel recomendados: <strong>" + ((dieselTabla[cppActual] / 100) * litros).toFixed(2) + " L</strong>";
+            }
+
+
+            if (diesel === undefined) {
+                diesel = "Consulta manual: CPP fuera de rango estimado";
+            } else {
+                diesel += "%";
+            }
+
+            document.getElementById("resultado").innerHTML = `
+                <strong>Resultado:</strong><br>${litrosDiesel}
+
+                Tiempo medido: <strong>${seg} segundos</strong><br>${litrosDiesel}
+
+                Viscosidad estimada: <strong>${cppActual} CPP</strong><br>${litrosDiesel}
+
+                Diésel recomendado para llegar a <strong>${objetivo} CPP</strong>: <strong>${diesel}</strong>
+            `;
+        }
+    </script>
+</body>
+</html>
