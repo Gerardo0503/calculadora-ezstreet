@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>EZ Street - Calculadora de Diésel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      background-color: #f7f7f7;
+    }
+    h1 {
+      color: #003366;
+    }
+    input, select, button {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      font-size: 16px;
+    }
+    .result {
+      background: #fff;
+      padding: 15px;
+      border-left: 5px solid #003366;
+    }
+  </style>
+</head>
+<body>
+  <h1>EZ Street - Calculadora de Diésel</h1>
+
+  <label>⏱ Ingresa los segundos medidos con la copa EZ CUP 4:</label>
+  <input type="number" id="tiempo" placeholder="Ej. 30">
+
+  <label>🛢 Ingresa los litros de mezcla que vas a preparar:</label>
+  <input type="number" id="litros" placeholder="Ej. 2000">
+
+  <label>🎯 Viscosidad objetivo (CPP):</label>
+  <input type="number" id="objetivo" value="400">
+
+  <button onclick="calcular()">CALCULAR</button>
+
+  <div id="resultado" class="result"></div>
+
+  <script>
+    const tablaCPP = {
+      21: 248, 22: 261, 23: 275, 24: 292, 25: 305, 26: 319, 27: 333, 28: 347,
+      29: 362, 30: 376, 31: 391, 32: 405, 33: 419, 34: 433, 35: 447, 36: 460,
+      37: 474, 38: 488, 39: 500, 40: 514, 41: 527, 42: 541, 43: 556, 44: 570,
+      45: 582
+    };
+
+    const tablaDiesel = [
+      { actual: 700, objetivo: 400, diesel: 5 },
+      { actual: 650, objetivo: 400, diesel: 4.5 },
+      { actual: 600, objetivo: 400, diesel: 4 },
+      { actual: 550, objetivo: 400, diesel: 3 },
+      { actual: 500, objetivo: 400, diesel: 2 },
+      { actual: 450, objetivo: 400, diesel: 1 },
+      { actual: 400, objetivo: 400, diesel: 0 },
+      { actual: 350, objetivo: 400, diesel: null },
+      { actual: 300, objetivo: 400, diesel: null },
+      { actual: 250, objetivo: 400, diesel: null }
+    ];
+
+    function interpolarCPP(cppActual) {
+      for (let i = 0; i < tablaDiesel.length - 1; i++) {
+        const a1 = tablaDiesel[i].actual;
+        const a2 = tablaDiesel[i + 1].actual;
+        const d1 = tablaDiesel[i].diesel;
+        const d2 = tablaDiesel[i + 1].diesel;
+
+        if (cppActual <= a1 && cppActual > a2 && d1 !== null && d2 !== null) {
+          const dieselInterpolado = d1 + (d2 - d1) * (cppActual - a1) / (a2 - a1);
+          return dieselInterpolado;
+        }
+      }
+      return null;
+    }
+
+    function calcular() {
+      const tiempo = parseFloat(document.getElementById("tiempo").value);
+      const litros = parseFloat(document.getElementById("litros").value);
+      const objetivo = parseFloat(document.getElementById("objetivo").value);
+      const resultado = document.getElementById("resultado");
+
+      const cppActual = tablaCPP[tiempo];
+
+      if (!cppActual) {
+        resultado.innerHTML = "⛔ Tiempo fuera de rango (21 a 45 s)";
+        return;
+      }
+
+      const diferencia = cppActual - objetivo;
+      const dieselPorcentaje = interpolarCPP(cppActual);
+      let dieselLitros = dieselPorcentaje !== null ? (dieselPorcentaje / 100) * litros : null;
+
+      resultado.innerHTML = `
+        <strong>Resultado:</strong><br>
+        Tiempo medido: <strong>${tiempo} segundos</strong><br>
+        Viscosidad estimada: <strong>${cppActual} CPP</strong><br>
+        Viscosidad objetivo: <strong>${objetivo} CPP</strong><br>
+        Diferencia: <strong>${diferencia} CPP</strong><br>
+        ${
+          dieselLitros !== null
+            ? `🔧 <strong>${dieselLitros.toFixed(2)} L</strong> de diésel recomendados (${dieselPorcentaje.toFixed(1)}%)`
+            : "📌 Consulta manual: diferencia fuera de rango interpolable"
+        }
+      `;
+    }
+  </script>
+</body>
+</html>
