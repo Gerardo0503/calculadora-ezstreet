@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculadora de Diésel EZ Street®</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background: #fff;
+    }
+    h2 { color: #0d47a1; }
+    label { display: block; margin-top: 10px; }
+    input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #0d47a1;
+      color: white;
+      border: none;
+      width: 100%;
+    }
+    .resultado {
+      margin-top: 20px;
+      font-size: 1.1em;
+    }
+  </style>
+</head>
+<body>
+  <h2>🛠 Calculadora de Diésel EZ Street®</h2>
+
+  <label>⏱ Segundos medidos (EZ CUP 4):</label>
+  <input type="number" id="segundos" min="1" required/>
+
+  <label>📍 Viscosidad objetivo (CPP):</label>
+  <input type="number" id="objetivo" required/>
+
+  <label>🛢 Litros de mezcla total:</label>
+  <input type="number" id="litros" required/>
+
+  <button onclick="calcular()">Calcular</button>
+
+  <div class="resultado" id="resultado"></div>
+
+  <script>
+    const tablaCPP = {
+      17: 186, 18: 201, 19: 217, 20: 232,
+      21: 246, 22: 261, 23: 276, 24: 290, 25: 305,
+      26: 319, 27: 333, 28: 347, 29: 361, 30: 376,
+      31: 389, 32: 403, 33: 417, 34: 431, 35: 445,
+      36: 459, 37: 472, 38: 486, 39: 500, 40: 514,
+      41: 527, 42: 541, 43: 556, 44: 570, 45: 582,
+      46: 595, 47: 609, 48: 622, 49: 636, 50: 650
+    };
+
+    const dieselTabla = [
+      { diferencia: 50, porcentaje: 1.0 },
+      { diferencia: 75, porcentaje: 1.8 },
+      { diferencia: 100, porcentaje: 2.5 },
+      { diferencia: 150, porcentaje: 3.5 },
+      { diferencia: 200, porcentaje: 4.5 },
+      { diferencia: 250, porcentaje: 5.5 }
+    ];
+
+    function calcular() {
+      const segundos = parseInt(document.getElementById("segundos").value);
+      const objetivo = parseInt(document.getElementById("objetivo").value);
+      const litros = parseFloat(document.getElementById("litros").value);
+      const actual = tablaCPP[segundos];
+
+      if (!actual) {
+        document.getElementById("resultado").innerHTML = "⛔ No hay dato para ese tiempo.";
+        return;
+      }
+
+      const diferencia = Math.abs(actual - objetivo);
+
+      // Interpolación lineal
+      let porcentaje = 0;
+      for (let i = 0; i < dieselTabla.length - 1; i++) {
+        const d1 = dieselTabla[i];
+        const d2 = dieselTabla[i + 1];
+        if (diferencia >= d1.diferencia && diferencia <= d2.diferencia) {
+          const frac = (diferencia - d1.diferencia) / (d2.diferencia - d1.diferencia);
+          porcentaje = d1.porcentaje + frac * (d2.porcentaje - d1.porcentaje);
+          break;
+        }
+      }
+
+      if (diferencia <= dieselTabla[0].diferencia) {
+        porcentaje = dieselTabla[0].porcentaje;
+      } else if (diferencia >= dieselTabla[dieselTabla.length - 1].diferencia) {
+        porcentaje = dieselTabla[dieselTabla.length - 1].porcentaje;
+      }
+
+      const litrosDiesel = (porcentaje / 100) * litros;
+
+      document.getElementById("resultado").innerHTML = `
+        ✅ <b>Viscosidad actual:</b> ${actual} CPP<br/>
+        🌡 <b>Diferencia:</b> ${diferencia} CPP<br/>
+        💧 <b>% de diésel a agregar:</b> ${porcentaje.toFixed(2)}%<br/>
+        🛢 <b>Litros totales:</b> ${litros} L<br/>
+        ➕ <b>Litros de diésel a agregar:</b> ${litrosDiesel.toFixed(2)} L
+      `;
+    }
+  </script>
+</body>
+</html>
